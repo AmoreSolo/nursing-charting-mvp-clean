@@ -1,177 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nursing Charting MVP</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #0070f3;
+    }
+    textarea {
+      width: 90%;
+      max-width: 600px;
+      height: 120px;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background: #0070f3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0057c2;
+    }
+    .output {
+      width: 90%;
+      max-width: 600px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 15px;
+      min-height: 100px;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
-  <div class="max-w-4xl mx-auto p-6 space-y-6">
-    <header class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold">🩺 Nursing Charting MVP</h1>
-      <span class="text-xs text-slate-500">Narrative + Educator Feedback mode</span>
-    </header>
+<body>
+  <h1>Nursing Charting MVP</h1>
+  <textarea id="input" placeholder="Enter a quick nursing note..."></textarea>
+  <button id="generate">Generate</button>
+  <div class="output" id="output"></div>
 
-    <section class="space-y-4">
-      <div class="space-y-3">
-        <label class="block text-sm font-medium">Input (quick nursing note)</label>
-        <textarea id="input" rows="8" class="w-full p-3 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. Writer responded to HCA's call during HS care. Dried small amount of bloody discharge noted on tip of penis and on his brief. Catheter intact and draining well, ~300 cc tea-colored urine. Denied discomfort. Abdomen soft and non-tender. Education to press call bell if discomfort."></textarea>
-      </div>
+  <script>
+    document.getElementById("generate").addEventListener("click", async () => {
+      const input = document.getElementById("input").value.trim();
+      const outputDiv = document.getElementById("output");
 
-      <div class="flex items-center gap-3">
-        <button id="generate" class="px-5 py-3 rounded-2xl bg-indigo-600 text-white font-medium shadow hover:bg-indigo-700">Generate</button>
-        <button id="copyOutput" class="px-4 py-3 rounded-2xl bg-slate-900 text-white text-sm shadow hover:bg-black">Copy Output</button>
-        <button id="settings" class="ml-auto px-3 py-2 rounded-xl border text-sm text-slate-600 hover:bg-slate-100">Settings</button>
-        <span id="status" class="text-sm text-slate-500"></span>
-      </div>
-
-      <!-- Local dev fallback -->
-      <div id="devSettings" class="hidden p-4 bg-white rounded-2xl border border-dashed">
-        <div class="text-sm text-slate-600 mb-2">Local testing only. Key is stored in this browser.</div>
-        <label class="block text-xs font-medium mb-1">OpenAI API Key</label>
-        <input id="apiKeyLocal" type="password" class="w-full p-2 rounded-xl border border-slate-300" placeholder="sk-..." />
-        <div class="mt-2 flex gap-2">
-          <button id="saveKey" class="px-3 py-2 rounded-xl bg-slate-800 text-white text-xs">Save</button>
-          <button id="clearKey" class="px-3 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs">Clear</button>
-          <span id="keyStatus" class="text-xs text-slate-500"></span>
-        </div>
-      </div>
-
-      <div class="p-4 bg-white rounded-2xl shadow">
-        <h2 class="font-semibold mb-2">Output</h2>
-        <pre id="output" class="whitespace-pre-wrap text-sm"></pre>
-      </div>
-
-      <div class="hidden"><pre id="debug"></pre></div>
-    </section>
-
-    <footer class="text-center text-xs text-slate-500 py-6">
-      Built as a minimal MVP (Narrative + Educator Feedback only). No API key required; proxied through /api/chat.
-      <span id="version" class="ml-2"></span>
-    </footer>
-  </div>
-
-<script>
-const APP_VERSION = "v0.0.4";
-window.addEventListener('DOMContentLoaded', () => {
-  const v = document.getElementById('version');
-  if (v) v.textContent = `• ${APP_VERSION}`;
-});
-
-function buildPrompt(userText){
-  return `You are an AI nursing charting assistant. Rewrite the user's rough nursing note into an objective, professional narrative.
-Rules:
-- Use military time with trailing 'h' (e.g., 1720h).
-- Use 'writer' instead of 'I'.
-- Do NOT use 'the resident'; use 'resident'.
-- Keep simple English, objective tone, first-person approach using 'writer'.
-- Prefer one short paragraph.
-
-Then add a short **Educator Feedback** block with:
-- What was done right (2-4 bullets)
-- Areas to improve (2-4 bullets)
-Keep bullets concise.
-
-User note:
-${userText}`;
-}
-
-function isLocal(){
-  const h = window.location.hostname;
-  return h === 'localhost' || h === '127.0.0.1' || window.location.origin.startsWith('file:');
-}
-async function callProxy(prompt){
-  return await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt })
-  });
-}
-async function callOpenAI(prompt){
-  const key = localStorage.getItem('OPENAI_KEY');
-  if(!key) throw new Error('No local API key saved. Click Settings to add one.');
-  return await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`
-    },
-    body: JSON.stringify({ model: 'gpt-4o-mini', input: prompt, temperature: 0.3 })
-  });
-}
-
-async function generate(){
-  const input = document.getElementById('input').value.trim();
-  const status = document.getElementById('status');
-  const out = document.getElementById('output');
-  const debug = document.getElementById('debug');
-
-  if(!input){ alert('Enter some input text.'); return; }
-
-  const prompt = buildPrompt(input);
-  if (debug) { debug.textContent = prompt; }
-  status.textContent = 'Generating…';
-  out.textContent = '';
-
-  try{
-    let resp;
-    try {
-      resp = await callProxy(prompt);                 
-      if(!resp.ok) throw new Error(`Proxy error ${resp.status}`);
-    } catch (proxyErr){
-      if (isLocal()) {                                
-        resp = await callOpenAI(prompt);
-        if(!resp.ok){
-          const t = await resp.text();
-          throw new Error(t || ('HTTP '+resp.status));
-        }
-      } else {
-        throw proxyErr;
+      if (!input) {
+        outputDiv.textContent = "⚠️ Please enter a nursing note first.";
+        return;
       }
-    }
 
-    const data = await resp.json();
-    let text = '';
-    try {
-      const c = data.output[0].content;
-      text = c.map(x => x.type === 'output_text' ? x.text : '').join('').trim();
-    } catch(e){
-      text = JSON.stringify(data, null, 2);
-    }
-    out.textContent = text;
-    status.textContent = 'Done';
-  } catch(err){
-    out.textContent = 'Error: '+ err.message;
-    status.textContent = 'Failed';
-  }
-}
+      outputDiv.textContent = "⏳ Generating professional charting note...";
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: input })
+        });
 
-function copyOutput(){
-  const out = document.getElementById('output').textContent;
-  navigator.clipboard.writeText(out).then(()=>{
-    const status = document.getElementById('status');
-    status.textContent = 'Copied';
-    setTimeout(()=>status.textContent='', 1500);
-  });
-}
-
-document.getElementById('generate').addEventListener('click', generate);
-document.getElementById('copyOutput').addEventListener('click', copyOutput);
-document.getElementById('settings').addEventListener('click', ()=>{
-  const box = document.getElementById('devSettings');
-  if(isLocal()) box.classList.toggle('hidden');
-});
-document.getElementById('saveKey')?.addEventListener('click', ()=>{
-  const v = document.getElementById('apiKeyLocal').value.trim();
-  if(!v){ alert('Enter a key first.'); return; }
-  localStorage.setItem('OPENAI_KEY', v);
-  document.getElementById('keyStatus').textContent = 'Saved to this browser';
-});
-document.getElementById('clearKey')?.addEventListener('click', ()=>{
-  localStorage.removeItem('OPENAI_KEY');
-  document.getElementById('keyStatus').textContent = 'Cleared';
-});
-</script>
+        const data = await res.json();
+        if (data.output) {
+          outputDiv.textContent = data.output.trim();
+        } else if (data.error) {
+          outputDiv.textContent = "❌ Error: " + data.error;
+        } else {
+          outputDiv.textContent = "⚠️ No response from AI.";
+        }
+      } catch (err) {
+        outputDiv.textContent = "❌ Network error: " + err.message;
+      }
+    });
+  </script>
 </body>
 </html>
