@@ -1,13 +1,13 @@
 // /api/chat.js
 export default async function handler(req, res) {
   try {
-    // Allow only POST requests
+    // Only allow POST
     if (req.method !== "POST") {
       res.status(405).json({ error: "Method not allowed" });
       return;
     }
 
-    // Parse the request body
+    // Get prompt from body (supports both Node & Web runtimes)
     const body = req.body ?? (await (async () => {
       try { return await req.json(); } catch { return {}; }
     })());
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Send request to OpenAI API
+    // Call OpenAI Responses API
     const r = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -31,10 +31,8 @@ export default async function handler(req, res) {
       })
     });
 
-    // Return OpenAI’s response to the browser
     const data = await r.json();
     res.status(r.ok ? 200 : 500).json(data);
-
   } catch (e) {
     res.status(500).json({ error: e?.message || "Server error" });
   }
