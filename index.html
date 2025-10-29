@@ -5,113 +5,144 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Nursing Note Assistant</title>
   <style>
-    :root{
-      --bg:#f7f8fa;
-      --card:#ffffff;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --primary:#2563eb;
-      --primary-pressed:#1e40af;
-      --border:#e5e7eb;
-      --radius:14px;
+    :root {
+      --bg: #f7f8fa;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-pressed: #1e40af;
+      --border: #e5e7eb;
+      --radius: 14px;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
+    * { box-sizing: border-box }
+    html, body { height: 100% }
+    body {
+      margin: 0;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-      color:var(--text);
-      background:var(--bg);
-      -webkit-font-smoothing:antialiased;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
     }
 
-    .wrap{
-      max-width:900px;
-      padding:40px 20px 60px;
-      margin:0 auto;
+    .wrap {
+      max-width: 900px;
+      padding: 40px 20px 60px;
+      margin: 0 auto;
     }
 
-    header{
-      text-align:center;
-      margin:10px 0 36px;
-    }
-    h1{
-      font-size:clamp(24px,3vw,34px);
-      margin:0 0 6px;
-      font-weight:700;
-    }
-    .sub{
-      color:var(--muted);
-      font-size:14px;
+    header {
+      text-align: center;
+      margin: 10px 0 36px;
     }
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:0 6px 20px rgba(16,24,40,.06);
-      padding:28px;
+    h1 {
+      font-size: clamp(24px, 3vw, 34px);
+      margin: 0 0 6px;
+      font-weight: 700;
     }
 
-    .stack{display:flex;flex-direction:column;gap:20px}
-
-    .label{
-      font-size:13px;
-      color:var(--muted);
-      margin-bottom:6px;
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
     }
 
-    textarea{
-      width:100%;
-      min-height:140px;
-      resize:vertical;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:14px 12px;
-      line-height:1.5;
-      font-size:15px;
-      background:#fff;
-      color:var(--text);
-      outline:none;
-      transition:border-color .15s ease;
-    }
-    textarea:focus{border-color:#c7d2fe; box-shadow:0 0 0 3px rgba(37,99,235,.12)}
-
-    .center{display:flex;justify-content:center;margin-top:6px}
-
-    button{
-      cursor:pointer;
-      border:0;
-      border-radius:12px;
-      padding:11px 20px;
-      font-weight:600;
-      background:var(--primary);
-      color:#fff;
-      transition:transform .02s ease, background .15s ease, box-shadow .15s ease;
-      box-shadow:0 6px 16px rgba(37,99,235,.20);
-    }
-    button:active{transform:translateY(1px); background:var(--primary-pressed)}
-
-    .output{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:12px;
-      min-height:96px;
-      padding:14px 12px;
-      font-size:15px;
-      line-height:1.55;
-      white-space:pre-wrap;
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 6px 20px rgba(16, 24, 40, .06);
+      padding: 28px;
     }
 
-    .error{
-      color:#b91c1c;
-      background:#fef2f2;
-      border:1px solid #fecaca;
-      border-radius:10px;
-      padding:10px 12px;
-      font-size:13px;
-      white-space:pre-wrap;
+    .stack { display: flex; flex-direction: column; gap: 20px }
+
+    .label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 12px;
+      line-height: 1.5;
+      font-size: 15px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s ease;
+    }
+
+    textarea:focus {
+      border-color: #c7d2fe;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .center { display: flex; justify-content: center; margin-top: 6px }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 20px;
+      font-weight: 600;
+      background: var(--primary);
+      color: #fff;
+      transition: transform .02s ease, background .15s ease, box-shadow .15s ease;
+      box-shadow: 0 6px 16px rgba(37, 99, 235, .20);
+    }
+
+    button:active { transform: translateY(1px); background: var(--primary-pressed) }
+
+    .output {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-height: 96px;
+      padding: 14px 12px;
+      font-size: 15px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .copy-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .copy-btn {
+      border: none;
+      background: transparent;
+      color: var(--primary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: color .15s ease;
+    }
+
+    .copy-btn:hover { color: var(--primary-pressed); }
+
+    .copied {
+      color: #16a34a;
+      font-size: 13px;
+      margin-left: 8px;
+      font-weight: 500;
+    }
+
+    .error {
+      color: #b91c1c;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -136,13 +167,21 @@
 
         <!-- Output -->
         <div>
-          <div class="label">Output</div>
+          <div class="copy-row">
+            <div class="label">Output</div>
+            <button class="copy-btn" id="copyOutput">📋 Copy</button>
+            <span class="copied" id="copiedOutput" style="display:none;">Copied!</span>
+          </div>
           <div id="output" class="output">—</div>
         </div>
 
         <!-- Educator Feedback -->
         <div>
-          <div class="label">Educator Feedback</div>
+          <div class="copy-row">
+            <div class="label">Educator Feedback</div>
+            <button class="copy-btn" id="copyFeedback">📋 Copy</button>
+            <span class="copied" id="copiedFeedback" style="display:none;">Copied!</span>
+          </div>
           <div id="feedback" class="output">—</div>
         </div>
 
@@ -157,6 +196,11 @@
     const outEl = document.getElementById('output');
     const fbEl = document.getElementById('feedback');
     const errEl = document.getElementById('error');
+
+    const copyOutputBtn = document.getElementById('copyOutput');
+    const copyFeedbackBtn = document.getElementById('copyFeedback');
+    const copiedOutput = document.getElementById('copiedOutput');
+    const copiedFeedback = document.getElementById('copiedFeedback');
 
     async function generate() {
       errEl.style.display = 'none';
@@ -178,10 +222,7 @@
         });
 
         const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(data?.error || `Server error (${res.status})`);
-        }
+        if (!res.ok) throw new Error(data?.error || `Server error (${res.status})`);
 
         outEl.textContent = data?.note?.trim() || 'No note returned.';
         fbEl.textContent = data?.feedback?.trim() || '—';
@@ -194,11 +235,20 @@
     }
 
     btn.addEventListener('click', generate);
+
     inputEl.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        generate();
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
     });
+
+    // Copy functionality
+    function copyText(element, copiedLabel) {
+      navigator.clipboard.writeText(element.textContent.trim());
+      copiedLabel.style.display = 'inline';
+      setTimeout(() => copiedLabel.style.display = 'none', 1200);
+    }
+
+    copyOutputBtn.addEventListener('click', () => copyText(outEl, copiedOutput));
+    copyFeedbackBtn.addEventListener('click', () => copyText(fbEl, copiedFeedback));
   </script>
 </body>
 </html>
