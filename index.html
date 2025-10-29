@@ -96,6 +96,8 @@
       color: #fff;
       transition: transform .02s ease, background .15s ease, box-shadow .15s ease;
       box-shadow: 0 6px 16px rgba(37, 99, 235, .20);
+      width: 180px; /* 🔹 consistent width */
+      text-align: center;
     }
 
     button:active { transform: translateY(1px); background: var(--primary-pressed) }
@@ -110,20 +112,6 @@
       line-height: 1.55;
       white-space: pre-wrap;
     }
-
-    .copy-btn {
-      cursor: pointer;
-      border: 0;
-      border-radius: 12px;
-      padding: 10px 22px;
-      background: var(--primary);
-      color: #fff;
-      font-weight: 600;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, .25);
-      transition: transform .02s ease, background .15s ease;
-    }
-
-    .copy-btn:active { transform: translateY(1px); background: var(--primary-pressed); }
 
     .copied {
       color: #16a34a;
@@ -166,8 +154,8 @@
         <div>
           <div class="label">Output</div>
           <div id="output" class="output">—</div>
-          <div class="center" style="margin-top:10px;">
-            <button class="copy-btn" id="copyOutput">📋 Copy</button>
+          <div class="center" style="margin-top:10px; flex-direction:column; align-items:center;">
+            <button id="copyOutput">Copy</button>
             <span class="copied" id="copiedOutput" style="display:none;">Copied!</span>
           </div>
         </div>
@@ -226,7 +214,6 @@
     }
 
     btn.addEventListener('click', generate);
-
     inputEl.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
     });
