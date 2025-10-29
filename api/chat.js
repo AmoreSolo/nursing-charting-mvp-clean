@@ -1,6 +1,5 @@
 // /api/chat.js
-// Minimal, stable Responses API call (no text_format/response_format).
-// Returns { note, feedback } and is tolerant of slightly non-JSON outputs.
+// Final stable version — works with new OpenAI Responses API and guarantees output.
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -19,19 +18,20 @@ export default async function handler(req, res) {
     }
 
     const systemPrompt = `
-      You are a nursing documentation assistant and educator.
+      You are a nursing documentation assistant and clinical educator.
 
-      TASK 1: Rewrite the user's quick note into a clear, objective chart entry.
-      - Always use "resident" instead of "patient".
-      - Be factual and concise; avoid opinions or subjective adjectives.
-      - No diagnosis or new orders.
+      TASK 1: Rewrite the user's note into a clear, objective nursing chart entry for a resident.
+      - Always use the term "resident" instead of "patient".
+      - Keep language factual, concise, and professional.
+      - Avoid subjective statements and emotional words.
 
-      TASK 2: Provide ONE short educator feedback line that begins with "💬 Feedback:".
+      TASK 2: Provide a short feedback line beginning with "💬 Feedback:"
+      explaining how well the documentation follows objective charting standards.
 
-      Return ONLY valid JSON:
+      Respond strictly in JSON format as:
       {
-        "note": "rewritten objective chart entry",
-        "feedback": "💬 Feedback: <one concise tip>"
+        "note": "rewritten note",
+        "feedback": "💬 Feedback: <one concise educational tip>"
       }
     `;
 
@@ -58,41 +58,34 @@ export default async function handler(req, res) {
 
     const data = await upstream.json();
 
-    // Responses API handy fields:
+    // 🔍 Some versions of the API return output in nested fields
     let text =
       data?.output_text ||
       data?.output?.[0]?.content?.[0]?.text?.value ||
+      data?.output?.[0]?.content?.[0]?.text ||
       "";
 
-    // Try to parse strict JSON first
-    let payload = null;
+    // ✅ Try to parse JSON
+    let payload;
     try {
       payload = JSON.parse(text);
-    } catch (_) {
-      // Relaxed fallback: try to extract a JSON block if the model wrapped it in prose
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        try {
-          payload = JSON.parse(match[0]);
-        } catch (_) { /* ignore */ }
-      }
-    }
-
-    // Final fallback – still return something useful
-    if (!payload || typeof payload !== "object") {
+    } catch {
+      // Fallback: extract manually if the model didn’t return pure JSON
       const [notePart, ...rest] = text.split("💬 Feedback:");
       payload = {
-        note: (notePart || "No note returned.").trim(),
-        feedback: rest.length ? ("💬 Feedback:" + rest.join("💬 Feedback:").trim()) : "💬 Feedback: Keep notes objective and resident-focused."
+        note: notePart?.trim() || "No note returned.",
+        feedback: rest.length
+          ? "💬 Feedback:" + rest.join("💬 Feedback:").trim()
+          : "💬 Feedback: Keep notes objective and resident-focused."
       };
     }
 
-    // Guard fields
-    if (typeof payload.note !== "string") payload.note = "No note returned.";
-    if (typeof payload.feedback !== "string") payload.feedback = "💬 Feedback: Keep notes objective and resident-focused.";
+    // Ensure proper defaults
+    if (!payload.note) payload.note = "No note returned.";
+    if (!payload.feedback) payload.feedback = "💬 Feedback: Keep notes objective and resident-focused.";
 
     return res.status(200).json(payload);
   } catch (err) {
-    return res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: `Server error: ${err?.message || err}` });
   }
 }
