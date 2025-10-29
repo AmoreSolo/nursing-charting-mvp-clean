@@ -1,6 +1,5 @@
 // /api/chat.js
-// Serverless endpoint for Nursing Charting MVP + Educator Feedback mode.
-// Uses OpenAI Responses API via fetch (no npm installs required).
+// Updated to use OpenAI Responses API (2024 spec) with Educator Feedback mode.
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -18,34 +17,13 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Server error: missing OpenAI API key." });
     }
 
-    // Build the prompt with strict rules
+    // System prompt: rewrite + educator feedback
     const systemPrompt = [
-      "You are a nursing documentation assistant **and** clinical educator.",
-      "TASK 1 (Note): Rewrite the user's quick note into a clear, objective,",
-      "concise **nursing chart entry** for a **resident** in assisted living.",
-      "Use neutral clinical language, **always use the word 'resident' (not 'patient')**,",
-      "avoid subjective judgments, no diagnoses, no treatment plans, no abbreviations that are non-standard.",
-      "Prefer short, complete sentences or a brief paragraph. Keep it factual.",
-      "",
-      "TASK 2 (Feedback): Provide one short teaching tip (1–2 sentences) that explains",
-      "why the rewrite is appropriate (documentation best practice).",
-      "Begin the feedback line with: \"💬 Feedback:\"",
+      "You are a nursing documentation assistant and clinical educator.",
+      "TASK 1: Rewrite the user's note into an objective, clear nursing chart entry for a resident.",
+      "Always use the word 'resident' instead of 'patient'. Avoid subjective phrasing or opinions.",
+      "TASK 2: Provide one short educator feedback line starting with '💬 Feedback:' explaining the documentation reasoning."
     ].join(" ");
-
-    // Ask for JSON output to make the frontend simple
-    const jsonSchema = {
-      name: "NursingNoteWithFeedback",
-      schema: {
-        type: "object",
-        properties: {
-          note: { type: "string" },
-          feedback: { type: "string" }
-        },
-        required: ["note", "feedback"],
-        additionalProperties: false
-      },
-      strict: true
-    };
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -59,7 +37,7 @@ export default async function handler(req, res) {
           { role: "system", content: systemPrompt },
           { role: "user", content: input }
         ],
-        response_format: { type: "json_schema", json_schema: jsonSchema },
+        text_format: "json", // ✅ fixed per new API
         temperature: 0.2
       })
     });
@@ -70,24 +48,21 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
+    let text = data?.output_text || "";
 
-    // Responses API: pull assistant text safely
-    // Expecting JSON string as the first content piece.
-    let text =
-      data?.output?.[0]?.content?.[0]?.text ??
-      data?.output_text ??
-      "";
-
-    // Parse the JSON string into an object
     let payload;
     try {
       payload = JSON.parse(text);
     } catch {
-      // Fallback if the model didn’t return strict JSON for some reason
-      payload = { note: text || "No note returned.", feedback: "💬 Feedback: Not available." };
+      // If not valid JSON, split feedback manually
+      const [notePart, ...feedbackParts] = text.split("💬 Feedback:");
+      payload = {
+        note: notePart?.trim() || "No note returned.",
+        feedback: feedbackParts.length ? "💬 Feedback:" + feedbackParts.join("💬 Feedback:").trim() : "💬 Feedback: Not available."
+      };
     }
 
-    // Final safety: force “resident” wording
+    // Force “resident” terminology
     if (payload?.note) {
       payload.note = payload.note.replace(/\b[Pp]atient\b/g, "resident");
     }
