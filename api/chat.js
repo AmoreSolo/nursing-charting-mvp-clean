@@ -1,5 +1,6 @@
 // /api/chat.js
-// Updated to use OpenAI Responses API (2024 spec) with Educator Feedback mode.
+// Minimal, stable Responses API call (no text_format/response_format).
+// Returns { note, feedback } and is tolerant of slightly non-JSON outputs.
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,7 +9,7 @@ export default async function handler(req, res) {
 
   try {
     const { input } = req.body || {};
-    if (!input || typeof input !== "string" || input.trim().length === 0) {
+    if (!input || typeof input !== "string" || !input.trim()) {
       return res.status(400).json({ error: "Missing or invalid 'input'." });
     }
 
@@ -17,15 +18,24 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Server error: missing OpenAI API key." });
     }
 
-    // System prompt: rewrite + educator feedback
-    const systemPrompt = [
-      "You are a nursing documentation assistant and clinical educator.",
-      "TASK 1: Rewrite the user's note into an objective, clear nursing chart entry for a resident.",
-      "Always use the word 'resident' instead of 'patient'. Avoid subjective phrasing or opinions.",
-      "TASK 2: Provide one short educator feedback line starting with '💬 Feedback:' explaining the documentation reasoning."
-    ].join(" ");
+    const systemPrompt = `
+      You are a nursing documentation assistant and educator.
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
+      TASK 1: Rewrite the user's quick note into a clear, objective chart entry.
+      - Always use "resident" instead of "patient".
+      - Be factual and concise; avoid opinions or subjective adjectives.
+      - No diagnosis or new orders.
+
+      TASK 2: Provide ONE short educator feedback line that begins with "💬 Feedback:".
+
+      Return ONLY valid JSON:
+      {
+        "note": "rewritten objective chart entry",
+        "feedback": "💬 Feedback: <one concise tip>"
+      }
+    `;
+
+    const upstream = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -37,38 +47,52 @@ export default async function handler(req, res) {
           { role: "system", content: systemPrompt },
           { role: "user", content: input }
         ],
-        text_format: "json", // ✅ fixed per new API
         temperature: 0.2
       })
     });
 
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "");
-      return res.status(500).json({ error: `Upstream error: ${errText || response.statusText}` });
+    if (!upstream.ok) {
+      const errText = await upstream.text().catch(() => "");
+      return res.status(500).json({ error: `Upstream error: ${errText || upstream.statusText}` });
     }
 
-    const data = await response.json();
-    let text = data?.output_text || "";
+    const data = await upstream.json();
 
-    let payload;
+    // Responses API handy fields:
+    let text =
+      data?.output_text ||
+      data?.output?.[0]?.content?.[0]?.text?.value ||
+      "";
+
+    // Try to parse strict JSON first
+    let payload = null;
     try {
       payload = JSON.parse(text);
-    } catch {
-      // If not valid JSON, split feedback manually
-      const [notePart, ...feedbackParts] = text.split("💬 Feedback:");
+    } catch (_) {
+      // Relaxed fallback: try to extract a JSON block if the model wrapped it in prose
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          payload = JSON.parse(match[0]);
+        } catch (_) { /* ignore */ }
+      }
+    }
+
+    // Final fallback – still return something useful
+    if (!payload || typeof payload !== "object") {
+      const [notePart, ...rest] = text.split("💬 Feedback:");
       payload = {
-        note: notePart?.trim() || "No note returned.",
-        feedback: feedbackParts.length ? "💬 Feedback:" + feedbackParts.join("💬 Feedback:").trim() : "💬 Feedback: Not available."
+        note: (notePart || "No note returned.").trim(),
+        feedback: rest.length ? ("💬 Feedback:" + rest.join("💬 Feedback:").trim()) : "💬 Feedback: Keep notes objective and resident-focused."
       };
     }
 
-    // Force “resident” terminology
-    if (payload?.note) {
-      payload.note = payload.note.replace(/\b[Pp]atient\b/g, "resident");
-    }
+    // Guard fields
+    if (typeof payload.note !== "string") payload.note = "No note returned.";
+    if (typeof payload.feedback !== "string") payload.feedback = "💬 Feedback: Keep notes objective and resident-focused.";
 
     return res.status(200).json(payload);
   } catch (err) {
-    return res.status(500).json({ error: `Server error: ${err?.message || err}` });
+    return res.status(500).json({ error: "Server error" });
   }
 }
