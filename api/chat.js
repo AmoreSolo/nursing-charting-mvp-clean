@@ -1,5 +1,4 @@
-// /api/chat.js
-// Final stable version — works with new OpenAI Responses API and guarantees output.
+import OpenAI from "openai";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,84 +7,63 @@ export default async function handler(req, res) {
 
   try {
     const { input } = req.body || {};
-    if (!input || typeof input !== "string" || !input.trim()) {
-      return res.status(400).json({ error: "Missing or invalid 'input'." });
+    if (!input || !input.trim()) {
+      return res.status(400).json({ error: "Missing 'input'." });
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "Server error: missing OpenAI API key." });
-    }
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const systemPrompt = `
-      You are a nursing documentation assistant and clinical educator.
+    // Single-string prompt (works reliably with the Responses API)
+    const prompt = `
+You are a strict Alberta Health Services (AHS)–compliant nursing documentation coach.
+Transform the quick note into:
+1) a clear, objective charting NOTE (resident-focused, no diagnosis, no “appears/seems/appearing”, past tense, include only facts observed or stated, avoid subjective language).
+2) a brief FEEDBACK section (1–3 concise bullet points about what info is missing to meet AHS expectations and audit readiness).
+3) an EXAMPLE note that demonstrates the feedback in practice. If details are missing, use square-bracket placeholders like [time], [site], [medication], [dose], [provider notified] so staff know what to supply.
 
-      TASK 1: Rewrite the user's note into a clear, objective nursing chart entry for a resident.
-      - Always use the term "resident" instead of "patient".
-      - Keep language factual, concise, and professional.
-      - Avoid subjective statements and emotional words.
+Rules:
+- Keep all content professional and concise.
+- Do NOT invent specifics—use [brackets] for unknowns.
+- Prefer “Resident” over “patient.”
+- Use single paragraph sentences for notes.
+- Return ONLY valid JSON with keys: "note", "feedback", "example".
+- JSON must be minified (no extra keys, no markdown).
 
-      TASK 2: Provide a short feedback line beginning with "💬 Feedback:"
-      explaining how well the documentation follows objective charting standards.
+Input note:
+"""${input.trim()}"""
 
-      Respond strictly in JSON format as:
-      {
-        "note": "rewritten note",
-        "feedback": "💬 Feedback: <one concise educational tip>"
-      }
-    `;
+Return JSON like:
+{"note":"...","feedback":"• point 1\\n• point 2","example":"..."}
+`;
 
-    const upstream = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        input: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: input }
-        ],
-        temperature: 0.2
-      })
+    const r = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: prompt
     });
 
-    if (!upstream.ok) {
-      const errText = await upstream.text().catch(() => "");
-      return res.status(500).json({ error: `Upstream error: ${errText || upstream.statusText}` });
-    }
+    const text = (r.output_text || "").trim();
 
-    const data = await upstream.json();
-
-    // 🔍 Some versions of the API return output in nested fields
-    let text =
-      data?.output_text ||
-      data?.output?.[0]?.content?.[0]?.text?.value ||
-      data?.output?.[0]?.content?.[0]?.text ||
-      "";
-
-    // ✅ Try to parse JSON
-    let payload;
+    // Try to parse JSON; fallback to safe empties if parsing fails.
+    let payload = { note: "", feedback: "", example: "" };
     try {
       payload = JSON.parse(text);
     } catch {
-      // Fallback: extract manually if the model didn’t return pure JSON
-      const [notePart, ...rest] = text.split("💬 Feedback:");
-      payload = {
-        note: notePart?.trim() || "No note returned.",
-        feedback: rest.length
-          ? "💬 Feedback:" + rest.join("💬 Feedback:").trim()
-          : "💬 Feedback: Keep notes objective and resident-focused."
-      };
+      // If the model didn't return JSON for some reason
+      payload.note = "";
+      payload.feedback = "• Unable to parse model response. Please try again.";
+      payload.example = "";
     }
 
-    // Ensure proper defaults
-    if (!payload.note) payload.note = "No note returned.";
-    if (!payload.feedback) payload.feedback = "💬 Feedback: Keep notes objective and resident-focused.";
+    // Final safety: coerce to strings
+    const note = String(payload.note || "").trim();
+    const feedback = String(payload.feedback || "").trim();
+    const example = String(payload.example || "").trim();
 
-    return res.status(200).json(payload);
+    return res.status(200).json({ note, feedback, example });
   } catch (err) {
-    return res.status(500).json({ error: `Server error: ${err?.message || err}` });
+    console.error(err);
+    return res
+      .status(500)
+      .json({ error: err?.message || "Server error" });
   }
 }
