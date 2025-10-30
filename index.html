@@ -1,157 +1,140 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SMART Charting — Specific, Measurable, Achievable, Relevant, Time-bound</title>
-  <link rel="manifest" href="/manifest.json?v=5" />
-  <meta name="theme-color" content="#0B57D0" />
-  <style>
-    :root {
-      --bg: #f7f8fb;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #6b7280;
-      --primary: #1e40af;
-      --primary-600: #1b4fd8;
-      --ring: rgba(30,64,175,0.2);
-      --radius: 14px;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color: var(--text);
-      background: linear-gradient(180deg, #f7f8fb 0%, #eef1f7 100%);
-    }
-    .container { max-width: 900px; margin: 0 auto; padding: 32px 16px 80px; }
-    header { text-align: center; margin: 10px 0 24px; }
-    h1 { margin: 0; font-size: clamp(26px, 4vw, 44px); font-weight: 800; color: var(--text); }
-    .tagline { color: var(--muted); font-size: clamp(14px, 2.4vw, 18px); }
-    .card {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: 0 10px 30px rgba(20, 40, 80, 0.06);
-      padding: 18px; margin-bottom: 16px;
-      border: 1px solid rgba(15,23,42,0.06);
-    }
-    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
-    textarea {
-      width: 100%; min-height: 150px; padding: 14px 16px;
-      border-radius: 12px; border: 1px solid rgba(15,23,42,0.08);
-      background: #fff; color: var(--text); font-size: 15px; line-height: 1.5;
-      outline: none; resize: vertical;
-    }
-    textarea:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 6px var(--ring);
-    }
-    .btn-row { display: flex; justify-content: center; margin: 18px 0 26px; }
-    .btn {
-      border: none; cursor: pointer; padding: 14px 28px;
-      border-radius: 999px; font-weight: 700; font-size: 16px;
-      color: #fff; background: linear-gradient(180deg, var(--primary) 0%, var(--primary-600) 100%);
-      box-shadow: 0 8px 18px rgba(30,64,175,0.25);
-      transition: transform .06s ease, box-shadow .12s ease, opacity .2s;
-    }
-    .btn:disabled { opacity: .6; cursor: not-allowed; }
-    .btn:active { transform: translateY(1px); box-shadow: 0 6px 14px rgba(30,64,175,0.22); }
-    .section-title { font-size: 15px; color: var(--muted); margin: 10px 0 8px; }
-    .output { min-height: 90px; white-space: pre-wrap; }
-    .copy-row { display:flex; justify-content:center; margin:14px 0 0; }
-    .notice {
-      font-size: 13px; color: #374151; background: #eef2ff;
-      border: 1px solid rgba(30,64,175,.2);
-      padding: 10px 12px; border-radius: 10px; margin-top: 12px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>SMART Charting</h1>
-      <div class="tagline">Specific • Measurable • Achievable • Relevant • Time-bound</div>
-    </header>
-
-    <div class="card">
-      <label for="input">Input</label>
-      <textarea id="input" placeholder="e.g., refused shower this morning; c/o feeling unwell; staff offered alternative."></textarea>
-      <div class="hint" style="font-size:13px;color:#6b7280;margin-top:6px;">Tip: Keep it short. The assistant will expand to a clear, objective note.</div>
-    </div>
-
-    <div class="btn-row">
-      <button id="generate" class="btn">Generate</button>
-    </div>
-
-    <div class="card">
-      <div class="section-title">Educator Feedback</div>
-      <div id="feedback" class="output">—</div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">Suggested Example (based on feedback)</div>
-      <div id="example" class="output">—</div>
-      <div class="copy-row">
-        <button id="copyExample" class="btn" type="button">Copy</button>
-      </div>
-      <div class="notice">
-        <strong>Disclaimer:</strong> This example is for learning and guidance only.  
-        It should not replace your direct, objective observations. Always document factual findings and resident responses per AHS standards.
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const inputEl = document.getElementById('input');
-    const feedbackEl = document.getElementById('feedback');
-    const exampleEl  = document.getElementById('example');
-    const btnGen     = document.getElementById('generate');
-    const btnCopy    = document.getElementById('copyExample');
-
-    async function postJSON(url, data) {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    }
-
-    btnGen.addEventListener('click', async () => {
-      const text = inputEl.value.trim();
-      if (!text) return inputEl.focus();
-      btnGen.disabled = true; btnGen.textContent = 'Generating…';
-      feedbackEl.textContent = '…'; exampleEl.textContent = '…';
-      try {
-        const data = await postJSON('/api/chat', { prompt: text, mode: 'feedback+example' });
-        feedbackEl.textContent = data.feedback || '—';
-        exampleEl.textContent  = data.example  || '—';
-      } catch (err) {
-        feedbackEl.textContent = `Error: ${err.message}`;
-        exampleEl.textContent  = '—';
-      } finally {
-        btnGen.disabled = false; btnGen.textContent = 'Generate';
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SMART Charting</title>
+    <style>
+      :root {
+        --bg: #f7f8fb;
+        --card: #ffffff;
+        --ink: #1a1a1a;
+        --accent: #0057ff;
+        --radius: 14px;
       }
-    });
-
-    btnCopy.addEventListener('click', async () => {
-      const t = exampleEl.textContent.trim();
-      if (!t || t === '—') return;
-      try {
-        await navigator.clipboard.writeText(t);
-        const prev = btnCopy.textContent;
-        btnCopy.textContent = 'Copied!';
-        setTimeout(() => btnCopy.textContent = prev, 1200);
-      } catch {
-        alert('Copy failed, please copy manually.');
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: var(--bg);
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: start;
+        margin: 0;
+        padding: 40px 20px;
       }
-    });
+      h1 {
+        color: var(--accent);
+        font-size: 2em;
+        font-weight: 700;
+      }
+      p.tagline {
+        color: #555;
+        font-size: 1em;
+        margin-bottom: 20px;
+      }
+      textarea {
+        width: 100%;
+        max-width: 600px;
+        min-height: 120px;
+        font-size: 1rem;
+        border-radius: var(--radius);
+        border: 1px solid #ddd;
+        padding: 10px;
+        resize: vertical;
+      }
+      button {
+        margin-top: 20px;
+        background-color: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius);
+        padding: 12px 30px;
+        font-size: 1rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+      }
+      button:hover {
+        background-color: #0041cc;
+      }
+      label {
+        margin-top: 25px;
+        font-weight: 600;
+        color: #333;
+        display: block;
+        text-align: left;
+        width: 100%;
+        max-width: 600px;
+      }
+      .output, .feedback, .example {
+        width: 100%;
+        max-width: 600px;
+        background: var(--card);
+        border-radius: var(--radius);
+        border: 1px solid #ddd;
+        padding: 12px;
+        margin-top: 8px;
+        white-space: pre-wrap;
+      }
+      .disclaimer {
+        font-size: 0.9rem;
+        color: #9b0000;
+        margin-top: 10px;
+        text-align: center;
+        max-width: 600px;
+      }
+    </style>
+  </head>
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js?v=5');
-      });
-    }
-  </script>
-</body>
+  <body>
+    <h1>SMART Charting</h1>
+    <p class="tagline">Specific • Measurable • Achievable • Relevant • Time-bound</p>
+
+    <label>Input</label>
+    <textarea id="userInput" placeholder="e.g., refused shower this morning; c/o feeling unwell; staff offered alternative."></textarea>
+    <button id="generateBtn">Generate</button>
+
+    <label>Educator Feedback</label>
+    <div class="feedback" id="feedbackBox">–</div>
+
+    <label>Suggested Example (based on feedback)</label>
+    <div class="example" id="exampleBox">–</div>
+    <button id="copyExampleBtn">Copy Example</button>
+
+    <p class="disclaimer">
+      ⚠️ The suggested example is only a guide and should not replace your own objective documentation based on direct observation.
+    </p>
+
+    <script>
+      const generateBtn = document.getElementById('generateBtn');
+      const feedbackBox = document.getElementById('feedbackBox');
+      const exampleBox = document.getElementById('exampleBox');
+      const copyExampleBtn = document.getElementById('copyExampleBtn');
+
+      generateBtn.onclick = async () => {
+        const input = document.getElementById('userInput').value.trim();
+        if (!input) return alert('Please enter your note.');
+
+        feedbackBox.textContent = "Generating feedback...";
+        exampleBox.textContent = "Generating example...";
+
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userInput: input })
+        });
+
+        const data = await res.json();
+
+        feedbackBox.textContent = data.feedback || "No feedback generated.";
+        exampleBox.textContent = data.example || "No example returned.";
+      };
+
+      copyExampleBtn.onclick = () => {
+        navigator.clipboard.writeText(exampleBox.textContent);
+        alert("Copied to clipboard!");
+      };
+    </script>
+  </body>
 </html>
