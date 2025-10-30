@@ -3,179 +3,161 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Nursing Note Assistant</title>
+  <title>Clinical Note Assistant</title>
   <style>
-    :root {
-      --bg: #f7f8fa;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --primary: #2563eb;
-      --primary-pressed: #1e40af;
-      --border: #e5e7eb;
-      --radius: 14px;
+    :root{
+      --bg:#f7f9fc; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+      --primary:#2563eb; --primary-press:#1e40af; --ring:#93c5fd;
+      --radius:14px;
     }
-    * { box-sizing: border-box }
-    html, body { height: 100% }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-      color: var(--text);
-      background: var(--bg);
-      -webkit-font-smoothing: antialiased;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      color:var(--text); background:var(--bg);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
     }
-    .wrap { max-width: 900px; padding: 40px 20px 60px; margin: 0 auto; }
-    header { text-align: center; margin: 10px 0 36px; }
-    h1 { font-size: clamp(24px, 3vw, 34px); margin: 0 0 6px; font-weight: 700; }
-    .sub { color: var(--muted); font-size: 14px; }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: 0 6px 20px rgba(16, 24, 40, .06);
-      padding: 28px;
+    .container{max-width:920px;margin:40px auto;padding:0 16px}
+    .title{font-size:clamp(24px,3.2vw,36px);font-weight:800;letter-spacing:.2px;text-align:center;margin:6px 0 22px}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:0 6px 24px rgba(15,23,42,.06);padding:18px 18px}
+    .label{font-size:14px;color:var(--muted);margin:12px 2px 8px}
+    textarea{
+      width:100%;min-height:140px;resize:vertical;border:1px solid #e2e8f0;border-radius:12px;
+      padding:14px 12px;font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#fbfdff;
+      outline:none; transition:border .15s, box-shadow .15s;
     }
-    .stack { display: flex; flex-direction: column; gap: 20px }
-    .label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-
-    textarea {
-      width: 100%; min-height: 140px; resize: vertical;
-      border: 1px solid var(--border); border-radius: 12px;
-      padding: 14px 12px; line-height: 1.5; font-size: 15px;
-      background: #fff; color: var(--text); outline: none;
-      transition: border-color .15s ease;
+    textarea:focus{border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.35)}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      min-width:180px;height:46px;border-radius:12px;border:none;cursor:pointer;
+      color:#fff;background:var(--primary);font-weight:700;letter-spacing:.2px;
+      box-shadow:0 10px 20px rgba(37,99,235,.25); transition:transform .05s ease, background .15s ease;
     }
-    textarea:focus { border-color: #c7d2fe; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
-    .center { display: flex; justify-content: center; margin-top: 8px }
-
-    button {
-      cursor: pointer; border: 0; border-radius: 12px;
-      padding: 11px 22px; font-weight: 600;
-      background: var(--primary); color: #fff;
-      transition: transform .02s ease, background .15s ease, box-shadow .15s ease;
-      box-shadow: 0 6px 16px rgba(37, 99, 235, .20);
-      width: 180px; text-align: center;
+    .btn:active{transform:translateY(1px); background:var(--primary-press)}
+    .btn[disabled]{opacity:.7;cursor:not-allowed;transform:none;box-shadow:none}
+    .stack{display:flex;flex-direction:column;gap:22px}
+    .copy-row{display:flex;justify-content:center;margin-top:14px}
+    .muted{color:var(--muted)}
+    .error{color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:12px 14px;border-radius:12px}
+    .row{display:grid;gap:18px}
+    @media (min-width:900px){ .row{grid-template-columns:1fr} }
+    /* Spinner inside button */
+    .spinner{
+      width:16px;height:16px;border-radius:50%;
+      border:2.5px solid rgba(255,255,255,.45); border-top-color:#fff;
+      animation:spin .8s linear infinite;
     }
-    button:active { transform: translateY(1px); background: var(--primary-pressed) }
-
-    .output {
-      background: #fff; border: 1px solid var(--border); border-radius: 12px;
-      min-height: 96px; padding: 14px 12px; font-size: 15px; line-height: 1.55; white-space: pre-wrap;
-    }
-    .copied { color: #16a34a; font-size: 13px; margin-left: 8px; font-weight: 500; }
-    .error {
-      color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca;
-      border-radius: 10px; padding: 10px 12px; font-size: 13px; white-space: pre-wrap;
-    }
-    .section-title { font-weight: 600; margin: 6px 0 8px; }
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Nursing Note Assistant</h1>
-      <div class="sub">Generate professional, objective nursing documentation.</div>
-    </header>
+  <div class="container">
+    <h1 class="title">Clinical Note Assistant</h1>
 
-    <section class="card">
-      <div class="stack">
-        <!-- Input -->
-        <div>
-          <div class="label">Input</div>
-          <textarea id="input" placeholder="e.g. refused shower this morning; c/o feeling unwell. staff encouraged rest and fluids."></textarea>
-        </div>
-
-        <div class="center">
-          <button id="generate">Generate</button>
-        </div>
-
-        <!-- Output -->
-        <div>
-          <div class="label">Output</div>
-          <div id="output" class="output">—</div>
-          <div class="center" style="margin-top:10px; flex-direction:column; align-items:center;">
-            <button id="copyOutput">Copy</button>
-            <span class="copied" id="copiedOutput" style="display:none;">Copied!</span>
-          </div>
-        </div>
-
-        <!-- Educator Feedback -->
-        <div>
-          <div class="label">Educator Feedback</div>
-          <div id="feedback" class="output">—</div>
-        </div>
-
-        <!-- Suggested Example -->
-        <div>
-          <div class="label section-title">Suggested Example (based on feedback)</div>
-          <div id="example" class="output">—</div>
-        </div>
-
-        <div id="error" class="error" style="display:none"></div>
+    <div class="card stack">
+      <div>
+        <div class="label">Input</div>
+        <textarea id="input" placeholder="e.g., declined shower this morning; c/o feeling unwell; staff informed RN; safety maintained."></textarea>
       </div>
-    </section>
+
+      <div class="row" style="justify-items:center">
+        <button id="generate" class="btn">
+          <span id="genLabel">Generate</span>
+        </button>
+      </div>
+
+      <div>
+        <div class="label">Output</div>
+        <textarea id="output" readonly placeholder="—"></textarea>
+        <div class="copy-row">
+          <button id="copy" class="btn" type="button">Copy</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="label">Educator Feedback</div>
+        <textarea id="feedback" readonly placeholder="—"></textarea>
+      </div>
+
+      <div>
+        <div class="label">Suggested Example (based on feedback)</div>
+        <textarea id="example" readonly placeholder="—"></textarea>
+      </div>
+
+      <div id="err" class="error" style="display:none"></div>
+      <div class="muted" style="text-align:center">Built for clarity and objectivity • Powered by <code>/api/chat</code></div>
+    </div>
   </div>
 
   <script>
-    const btn = document.getElementById('generate');
-    const inputEl = document.getElementById('input');
-    const outEl = document.getElementById('output');
-    const fbEl = document.getElementById('feedback');
-    const exEl = document.getElementById('example');
-    const errEl = document.getElementById('error');
+    const $ = (id) => document.getElementById(id);
+    const btn = $("generate");
+    const genLabel = $("genLabel");
+    const input = $("input");
+    const output = $("output");
+    const feedback = $("feedback");
+    const example = $("example");
+    const err = $("err");
+    const copyBtn = $("copy");
 
-    const copyOutputBtn = document.getElementById('copyOutput');
-    const copiedOutput = document.getElementById('copiedOutput');
-
-    async function generate() {
-      errEl.style.display = 'none';
-      outEl.textContent = '…';
-      fbEl.textContent = '…';
-      exEl.textContent = '…';
-
-      const note = inputEl.value.trim();
-      if (!note) {
-        outEl.textContent = 'Please enter an input note.';
-        fbEl.textContent = '—';
-        exEl.textContent = '—';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: note })
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || `Server error (${res.status})`);
-
-        outEl.textContent = data?.note?.trim() || 'No note returned.';
-        fbEl.textContent = data?.feedback?.trim() || '—';
-        exEl.textContent = data?.example?.trim() || '—';
-      } catch (e) {
-        outEl.textContent = '—';
-        fbEl.textContent = '—';
-        exEl.textContent = '—';
-        errEl.textContent = `Network error: ${e.message}`;
-        errEl.style.display = 'block';
+    function setLoading(isLoading){
+      if(isLoading){
+        btn.disabled = true;
+        genLabel.textContent = "Generating…";
+        const sp = document.createElement("span");
+        sp.className = "spinner";
+        sp.setAttribute("aria-hidden","true");
+        if(!btn.querySelector(".spinner")) btn.appendChild(sp);
+      }else{
+        btn.disabled = false;
+        genLabel.textContent = "Generate";
+        const sp = btn.querySelector(".spinner");
+        if(sp) sp.remove();
       }
     }
 
-    btn.addEventListener('click', generate);
-    inputEl.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
+    async function callApi(note){
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: note })
+      });
+      if(!res.ok){
+        const text = await res.text().catch(()=> "");
+        throw new Error(`Server ${res.status}: ${text || res.statusText}`);
+      }
+      return res.json();
+    }
+
+    btn.addEventListener("click", async () => {
+      err.style.display="none"; err.textContent="";
+      output.value = ""; feedback.value = ""; example.value = "";
+      const note = input.value.trim();
+      if(!note){ err.textContent = "Please enter a brief input first."; err.style.display="block"; return; }
+      try{
+        setLoading(true);
+        const data = await callApi(note);
+        output.value   = data.note || "";
+        feedback.value = data.feedback || "";
+        example.value  = data.example || "";
+      }catch(e){
+        err.textContent = "Network error: " + e.message;
+        err.style.display = "block";
+      }finally{
+        setLoading(false);
+      }
     });
 
-    // Copy (Output)
-    function copyText(element, copiedLabel) {
-      navigator.clipboard.writeText(element.textContent.trim());
-      copiedLabel.style.display = 'inline';
-      setTimeout(() => copiedLabel.style.display = 'none', 1200);
-    }
-    copyOutputBtn.addEventListener('click', () => copyText(outEl, copiedOutput));
+    copyBtn.addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(output.value || "");
+        copyBtn.textContent = "Copied!";
+        setTimeout(()=> copyBtn.textContent = "Copy", 1200);
+      }catch{
+        copyBtn.textContent = "Failed";
+        setTimeout(()=> copyBtn.textContent = "Copy", 1200);
+      }
+    });
   </script>
 </body>
 </html>
