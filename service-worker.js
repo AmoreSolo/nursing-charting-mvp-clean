@@ -1,38 +1,34 @@
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `smart-charting-${CACHE_VERSION}`;
-const URLS_TO_CACHE = ['/', '/index.html', '/manifest.json?v=4'];
+const ASSETS = ['/', '/index.html', '/manifest.json?v=5'];
 
-// Install
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(URLS_TO_CACHE))
-  );
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
 
-// Activate – purge old caches
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.map(k => (k === CACHE_NAME ? null : caches.delete(k))))
+      Promise.all(keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : null)))
     )
   );
   self.clients.claim();
 });
 
-// Network-first for HTML, cache-first for static
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   const req = event.request;
+  const url = new URL(req.url);
+
   if (req.method !== 'GET') return;
 
-  const isHTML = req.headers.get('accept')?.includes('text/html');
-  if (isHTML) {
+  if (req.mode === 'navigate' || (req.destination === 'document' && url.origin === location.origin)) {
     event.respondWith(
       fetch(req).then(res => {
         const copy = res.clone();
-        caches.open(CACHE_NAME).then(c => c.put(req, copy));
+        caches.open(CACHE_NAME).then(cache => cache.put('/', copy));
         return res;
-      }).catch(() => caches.match(req))
+      }).catch(() => caches.match('/index.html'))
     );
     return;
   }
@@ -40,7 +36,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(req).then(cached => cached || fetch(req).then(res => {
       const copy = res.clone();
-      caches.open(CACHE_NAME).then(c => c.put(req, copy));
+      caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
       return res;
     }))
   );
