@@ -3,14 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Title shown on browser tab -->
   <title>SMART Charting — Specific, Measurable, Achievable, Relevant, Time-bound</title>
-
-  <!-- Force-refresh the PWA manifest when we bump version -->
-  <link rel="manifest" href="/manifest.json?v=2" />
-
-  <meta name="theme-color" content="#1565c0" />
+  <link rel="manifest" href="/manifest.json?v=5" />
+  <meta name="theme-color" content="#0B57D0" />
   <style>
     :root {
       --bg: #f7f8fb;
@@ -23,62 +18,28 @@
       --radius: 14px;
     }
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
       color: var(--text);
       background: linear-gradient(180deg, #f7f8fb 0%, #eef1f7 100%);
     }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 32px 16px 80px;
-    }
-    header {
-      text-align: center;
-      margin: 10px 0 24px;
-    }
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(26px, 4vw, 44px);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: var(--text);
-    }
-    .tagline {
-      color: var(--muted);
-      font-size: clamp(14px, 2.4vw, 18px);
-    }
+    .container { max-width: 900px; margin: 0 auto; padding: 32px 16px 80px; }
+    header { text-align: center; margin: 10px 0 24px; }
+    h1 { margin: 0; font-size: clamp(26px, 4vw, 44px); font-weight: 800; color: var(--text); }
+    .tagline { color: var(--muted); font-size: clamp(14px, 2.4vw, 18px); }
     .card {
-      background: var(--card);
-      border-radius: var(--radius);
+      background: var(--card); border-radius: var(--radius);
       box-shadow: 0 10px 30px rgba(20, 40, 80, 0.06);
-      padding: 18px;
-      margin-bottom: 16px;
+      padding: 18px; margin-bottom: 16px;
       border: 1px solid rgba(15,23,42,0.06);
     }
-    label {
-      display: block;
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 8px;
-      letter-spacing: .2px;
-    }
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
     textarea {
-      width: 100%;
-      min-height: 150px;
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(15,23,42,0.08);
-      background: #fff;
-      color: var(--text);
-      font-size: 15px;
-      line-height: 1.5;
-      outline: none;
-      box-shadow: 0 0 0 0 rgba(0,0,0,0);
-      transition: box-shadow .15s ease, border-color .15s ease;
-      resize: vertical;
+      width: 100%; min-height: 150px; padding: 14px 16px;
+      border-radius: 12px; border: 1px solid rgba(15,23,42,0.08);
+      background: #fff; color: var(--text); font-size: 15px; line-height: 1.5;
+      outline: none; resize: vertical;
     }
     textarea:focus {
       border-color: var(--primary);
@@ -86,39 +47,21 @@
     }
     .btn-row { display: flex; justify-content: center; margin: 18px 0 26px; }
     .btn {
-      appearance: none; -webkit-appearance: none;
-      border: none; cursor: pointer;
-      padding: 14px 28px;
-      border-radius: 999px;
-      font-weight: 700; font-size: 16px;
+      border: none; cursor: pointer; padding: 14px 28px;
+      border-radius: 999px; font-weight: 700; font-size: 16px;
       color: #fff; background: linear-gradient(180deg, var(--primary) 0%, var(--primary-600) 100%);
       box-shadow: 0 8px 18px rgba(30,64,175,0.25);
       transition: transform .06s ease, box-shadow .12s ease, opacity .2s;
     }
     .btn:disabled { opacity: .6; cursor: not-allowed; }
     .btn:active { transform: translateY(1px); box-shadow: 0 6px 14px rgba(30,64,175,0.22); }
-    .muted { color: var(--muted); font-size: 14px; }
-    .hint { font-size: 13px; color: var(--muted); margin-top: 8px; }
-
-    .section-title {
-      font-size: 15px;
-      color: var(--muted);
-      margin: 10px 0 8px;
-      letter-spacing: .25px;
-    }
-    .output {
-      min-height: 90px;
-      white-space: pre-wrap;
-    }
+    .section-title { font-size: 15px; color: var(--muted); margin: 10px 0 8px; }
+    .output { min-height: 90px; white-space: pre-wrap; }
     .copy-row { display:flex; justify-content:center; margin:14px 0 0; }
     .notice {
-      font-size: 13px;
-      color: #6b7280;
-      background: #eef2ff;
+      font-size: 13px; color: #374151; background: #eef2ff;
       border: 1px solid rgba(30,64,175,.2);
-      padding: 10px 12px;
-      border-radius: 10px;
-      margin-top: 12px;
+      padding: 10px 12px; border-radius: 10px; margin-top: 12px;
     }
   </style>
 </head>
@@ -131,8 +74,8 @@
 
     <div class="card">
       <label for="input">Input</label>
-      <textarea id="input" placeholder="e.g., refused shower this morning; c/o feeling unwell; ROM completed; ate 50% of lunch"></textarea>
-      <div class="hint">Tip: Keep it short. The assistant will expand to a clean nursing note.</div>
+      <textarea id="input" placeholder="e.g., refused shower this morning; c/o feeling unwell; staff offered alternative."></textarea>
+      <div class="hint" style="font-size:13px;color:#6b7280;margin-top:6px;">Tip: Keep it short. The assistant will expand to a clear, objective note.</div>
     </div>
 
     <div class="btn-row">
@@ -151,72 +94,62 @@
         <button id="copyExample" class="btn" type="button">Copy</button>
       </div>
       <div class="notice">
-        <strong>Reminder:</strong> The example is to guide SMART (Specific, Measurable, Achievable, Relevant, Time-bound) charting.
-        Always document actual observations/interventions and resident responses you performed or verified per AHS standards.
+        <strong>Disclaimer:</strong> This example is for learning and guidance only.  
+        It should not replace your direct, objective observations. Always document factual findings and resident responses per AHS standards.
       </div>
     </div>
   </div>
 
   <script>
     const inputEl = document.getElementById('input');
-    const outFeedback = document.getElementById('feedback');
-    const outExample  = document.getElementById('example');
-    const btnGen      = document.getElementById('generate');
-    const btnCopyEx   = document.getElementById('copyExample');
+    const feedbackEl = document.getElementById('feedback');
+    const exampleEl  = document.getElementById('example');
+    const btnGen     = document.getElementById('generate');
+    const btnCopy    = document.getElementById('copyExample');
 
     async function postJSON(url, data) {
       const res = await fetch(url, {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!res.ok) {
-        const text = await res.text().catch(()=> '');
-        throw new Error(`Server ${res.status}: ${text || res.statusText}`);
-      }
+      if (!res.ok) throw new Error(await res.text());
       return res.json();
     }
 
     btnGen.addEventListener('click', async () => {
-      const content = (inputEl.value || '').trim();
-      if (!content) { inputEl.focus(); return; }
-
+      const text = inputEl.value.trim();
+      if (!text) return inputEl.focus();
       btnGen.disabled = true; btnGen.textContent = 'Generating…';
-      outFeedback.textContent = '…';
-      outExample.textContent  = '…';
-
+      feedbackEl.textContent = '…'; exampleEl.textContent = '…';
       try {
-        const data = await postJSON('/api/chat', { prompt: content, mode: 'feedback+example' });
-        const feedback = (data && data.feedback) || '';
-        const example  = (data && data.example)  || '';
-
-        outFeedback.textContent = feedback || '—';
-        outExample.textContent  = example  || '—';
-      } catch (e) {
-        outFeedback.textContent = `Error: ${e.message}`;
-        outExample.textContent  = '—';
+        const data = await postJSON('/api/chat', { prompt: text, mode: 'feedback+example' });
+        feedbackEl.textContent = data.feedback || '—';
+        exampleEl.textContent  = data.example  || '—';
+      } catch (err) {
+        feedbackEl.textContent = `Error: ${err.message}`;
+        exampleEl.textContent  = '—';
       } finally {
         btnGen.disabled = false; btnGen.textContent = 'Generate';
       }
     });
 
-    btnCopyEx.addEventListener('click', async () => {
-      const text = outExample.textContent.trim();
-      if (!text || text === '—') return;
+    btnCopy.addEventListener('click', async () => {
+      const t = exampleEl.textContent.trim();
+      if (!t || t === '—') return;
       try {
-        await navigator.clipboard.writeText(text);
-        const prev = btnCopyEx.textContent;
-        btnCopyEx.textContent = 'Copied!';
-        setTimeout(() => (btnCopyEx.textContent = prev), 1000);
-      } catch (e) {
-        alert('Copy failed. You can select & copy manually.');
+        await navigator.clipboard.writeText(t);
+        const prev = btnCopy.textContent;
+        btnCopy.textContent = 'Copied!';
+        setTimeout(() => btnCopy.textContent = prev, 1200);
+      } catch {
+        alert('Copy failed, please copy manually.');
       }
     });
 
-    // Register/refresh service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js?v=2').catch(()=>{});
+        navigator.serviceWorker.register('/service-worker.js?v=5');
       });
     }
   </script>
