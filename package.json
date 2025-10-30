@@ -1,10 +1,22 @@
 {
-  "name": "nursing-charting-mvp",
-  "version": "1.0.0",
-  "description": "AI-powered nursing charting MVP",
-  "main": "index.js",
-  "type": "module",
-  "dependencies": {
-    "openai": "^4.68.4"
-  }
+  "name": "SMART Charting",
+  "short_name": "SMART Charting",
+  "description": "Specific, Measurable, Achievable, Relevant, Time-bound charting assistant for AHS-aligned nursing documentation.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1565c0",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
