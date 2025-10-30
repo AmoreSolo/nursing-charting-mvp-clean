@@ -3,67 +3,72 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Clinical Note Assistant</title>
+  <title>SMART Charting</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1565c0" />
   <style>
     :root{
       --bg:#f7f8fb; --panel:#ffffff; --ink:#0f172a; --muted:#475569;
-      --accent:#2563eb; --accent-ink:#fff; --ring:#cbd5e1; --warn:#7c3aed;
+      --accent:#1565c0; --accent-ink:#fff; --ring:#cbd5e1;
     }
     *{box-sizing:border-box}
     body{
       margin:0; background:var(--bg); color:var(--ink);
-      font:16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
-    .wrap{max-width:920px; margin:48px auto; padding:0 16px}
+    .wrap{max-width:920px;margin:48px auto;padding:0 16px}
     h1{
-      margin:0 0 6px; font-size:clamp(24px,3vw,32px); letter-spacing:.2px;
-      text-align:center;
+      margin:0 0 4px; font-size:clamp(26px,3vw,36px);
+      text-align:center; font-weight:800; color:var(--accent);
+      letter-spacing:.3px;
     }
     .tagline{
-      text-align:center; color:var(--muted); margin-bottom:28px; font-size:15px;
+      text-align:center; color:#444; margin:0 0 28px;
+      font-size:15px; font-style:italic;
     }
     .card{
-      background:var(--panel); border:1px solid var(--ring); border-radius:14px; padding:18px;
-      box-shadow:0 2px 10px rgba(2,6,23,.04);
+      background:var(--panel); border:1px solid var(--ring);
+      border-radius:14px; padding:18px;
+      box-shadow:0 2px 10px rgba(2,6,23,.05);
     }
-    label{display:block; font-weight:600; color:var(--muted); margin:0 0 8px 4px}
+    label{display:block;font-weight:600;color:var(--muted);margin:0 0 8px 4px}
     textarea{
-      width:100%; min-height:150px; resize:vertical; padding:14px 12px;
-      border:1px solid var(--ring); border-radius:12px; background:#fff; color:var(--ink);
-      outline:none; transition:border .15s ease, box-shadow .15s ease;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size:15px; line-height:1.5;
+      width:100%;min-height:150px;resize:vertical;padding:14px 12px;
+      border:1px solid var(--ring);border-radius:12px;background:#fff;color:var(--ink);
+      outline:none;transition:border .15s ease, box-shadow .15s ease;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:15px;line-height:1.5;
     }
-    textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-    .btn-row{display:flex; justify-content:center; margin:18px 0}
+    textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(21,101,192,.15)}
+    .btn-row{display:flex;justify-content:center;margin:20px 0}
     .btn{
-      appearance:none; border:0; background:var(--accent); color:var(--accent-ink);
-      padding:12px 22px; border-radius:12px; font-weight:700; cursor:pointer;
-      box-shadow:0 6px 22px rgba(37,99,235,.22);
-      transition:transform .04s ease, filter .15s ease;
+      border:0;border-radius:12px;padding:12px 22px;
+      background:var(--accent);color:var(--accent-ink);
+      font-weight:700;cursor:pointer;box-shadow:0 6px 22px rgba(21,101,192,.22);
+      transition:transform .05s ease, filter .15s ease;
     }
     .btn:active{transform:translateY(1px)}
     .section{margin-top:18px}
     .box{
-      border:1px solid var(--ring); border-radius:12px; background:#fff; padding:14px 16px;
-      min-height:120px;
+      border:1px solid var(--ring);border-radius:12px;background:#fff;
+      padding:14px 16px;min-height:120px;
     }
     .disclaimer{
-      margin-top:18px; font-size:13px; color:#7c2d12; background:#fff7ed;
-      border:1px solid #fed7aa; padding:10px 12px; border-radius:10px;
+      margin-top:18px;font-size:13px;color:#7c2d12;background:#fff7ed;
+      border:1px solid #fed7aa;padding:10px 12px;border-radius:10px;
     }
-    .muted{color:var(--muted); font-size:14px}
+    .muted{color:var(--muted);font-size:14px}
     .hidden{display:none}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Clinical Note Assistant</h1>
-    <p class="tagline">Clean, objective charting aligned with AHS standards—faster.</p>
+    <h1>SMART Charting</h1>
+    <p class="tagline">Specific, Measurable, Achievable, Relevant, Time-bound</p>
 
-    <div class="card section">
+    <div class="card">
       <label for="input">Input</label>
-      <textarea id="input" placeholder="e.g., Rash noted to left upper arm, c/o itchy, no drainage. Nurse notified, area cleansed."></textarea>
+      <textarea id="input" placeholder="e.g., Resident refused supper, not hungry; fluids offered, safety maintained."></textarea>
 
       <div class="btn-row">
         <button id="generate" class="btn">Generate</button>
@@ -81,8 +86,8 @@
           <button id="copy" class="btn">Copy</button>
         </div>
         <p class="disclaimer">
-          This suggested example is a guide only and does not replace the staff member’s own
-          objective documentation of what was actually observed, performed, and communicated.
+          This suggested example is a guide only and does not replace your own objective documentation
+          of what was actually observed, performed, and communicated.
         </p>
       </div>
 
@@ -91,7 +96,7 @@
   </div>
 
   <script>
-    const $ = (id) => document.getElementById(id);
+    const $ = id => document.getElementById(id);
     const inputEl = $("input");
     const genBtn  = $("generate");
     const copyBtn = $("copy");
@@ -99,60 +104,60 @@
     const exEl    = $("example");
     const errEl   = $("error");
 
-    async function callAPI(note) {
-      const r = await fetch("/api/chat", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ note })
+    async function callAPI(note){
+      const r = await fetch("/api/chat",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ note })
       });
-      if (!r.ok) {
-        const t = await r.text().catch(()=> "");
-        throw new Error(`API ${r.status}: ${t || r.statusText}`);
+      if(!r.ok){
+        const t=await r.text().catch(()=> "");
+        throw new Error(`API ${r.status}: ${t||r.statusText}`);
       }
       return r.json();
     }
 
     function setBusy(b){
-      genBtn.disabled = b; copyBtn.disabled = b;
-      genBtn.style.filter = b ? "grayscale(30%) brightness(95%)" : "";
-      copyBtn.style.filter = b ? "grayscale(30%) brightness(95%)" : "";
+      genBtn.disabled=b; copyBtn.disabled=b;
+      genBtn.style.filter=b?"grayscale(30%) brightness(95%)":"";
+      copyBtn.style.filter=b?"grayscale(30%) brightness(95%)":"";
     }
 
-    genBtn.addEventListener("click", async () => {
+    genBtn.addEventListener("click",async()=>{
       errEl.classList.add("hidden");
-      const note = (inputEl.value || "").trim();
-      if (!note) {
-        errEl.textContent = "Please enter a short clinical input.";
+      const note=(inputEl.value||"").trim();
+      if(!note){
+        errEl.textContent="Please enter a short clinical input.";
         errEl.classList.remove("hidden");
         return;
       }
       setBusy(true);
-      fbEl.innerHTML = "Generating feedback…";
-      exEl.value = "";
-
-      try {
-        const data = await callAPI(note);
-        // feedbackHtml is safe HTML we generated server-side
-        fbEl.innerHTML = data.feedbackHtml || "—";
-        exEl.value = data.example || "";
-      } catch (e) {
-        console.error(e);
-        fbEl.innerHTML = "—";
-        exEl.value = "";
-        errEl.textContent = "Network error: " + (e?.message || e);
+      fbEl.innerHTML="Generating feedback…";
+      exEl.value="";
+      try{
+        const data=await callAPI(note);
+        fbEl.innerHTML=data.feedbackHtml||"—";
+        exEl.value=data.example||"";
+      }catch(e){
+        fbEl.innerHTML="—"; exEl.value="";
+        errEl.textContent="Network error: "+(e?.message||e);
         errEl.classList.remove("hidden");
-      } finally {
-        setBusy(false);
-      }
+      }finally{ setBusy(false); }
     });
 
-    copyBtn.addEventListener("click", async () => {
-      const txt = exEl.value.trim();
-      if (!txt) return;
+    copyBtn.addEventListener("click",async()=>{
+      const txt=exEl.value.trim(); if(!txt)return;
       await navigator.clipboard.writeText(txt);
-      copyBtn.textContent = "Copied!";
-      setTimeout(() => (copyBtn.textContent = "Copy"), 900);
+      copyBtn.textContent="Copied!";
+      setTimeout(()=>copyBtn.textContent="Copy",900);
     });
+
+    if("serviceWorker" in navigator){
+      navigator.serviceWorker
+        .register("/service-worker.js")
+        .then(()=>console.log("✅ Service Worker registered"))
+        .catch(err=>console.log("⚠️ SW failed",err));
+    }
   </script>
 </body>
 </html>
