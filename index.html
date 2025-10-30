@@ -2,162 +2,134 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Clinical Note Assistant</title>
   <style>
     :root{
-      --bg:#f7f9fc; --card:#ffffff; --text:#0f172a; --muted:#64748b;
-      --primary:#2563eb; --primary-press:#1e40af; --ring:#93c5fd;
+      --bg:#f7f8fb;
+      --card:#ffffff;
+      --ink:#0f172a;          /* slate-900 */
+      --muted:#475569;        /* slate-600 */
+      --accent:#1d4ed8;       /* blue-700 */
+      --accent-press:#1e40af; /* blue-800 */
+      --ring:#93c5fd;         /* blue-300 */
+      --border:#e5e7eb;       /* gray-200 */
+      --warn:#7c2d12;         /* amber-900-ish for disclaimer text */
+      --warn-bg:#fff7ed;      /* amber-50-ish */
       --radius:14px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
-      margin:0; font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-      color:var(--text); background:var(--bg);
-      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      margin:0;background:var(--bg);color:var(--ink);
+      font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
     }
-    .container{max-width:920px;margin:40px auto;padding:0 16px}
-    .title{font-size:clamp(24px,3.2vw,36px);font-weight:800;letter-spacing:.2px;text-align:center;margin:6px 0 22px}
-    .card{background:var(--card);border-radius:var(--radius);box-shadow:0 6px 24px rgba(15,23,42,.06);padding:18px 18px}
-    .label{font-size:14px;color:var(--muted);margin:12px 2px 8px}
+    .wrap{max-width:940px;margin:42px auto 60px;padding:0 18px}
+    .title{font-size:36px;font-weight:800;letter-spacing:.2px;text-align:center;margin:6px 0 6px}
+    .tagline{color:var(--muted);text-align:center;margin:0 0 26px;font-size:15px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 18px}
+    label{display:block;font-weight:600;margin:10px 6px 8px;color:var(--muted)}
     textarea{
-      width:100%;min-height:140px;resize:vertical;border:1px solid #e2e8f0;border-radius:12px;
-      padding:14px 12px;font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#fbfdff;
-      outline:none; transition:border .15s, box-shadow .15s;
+      width:100%;min-height:170px;border:1px solid var(--border);border-radius:12px;
+      padding:14px 16px;resize:vertical;background:#fff;color:var(--ink);
+      outline:none;box-shadow:none;transition:box-shadow .15s,border-color .15s;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace
     }
-    textarea:focus{border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.35)}
+    textarea:focus{border-color:var(--ring);box-shadow:0 0 0 4px rgba(147,197,253,.45)}
+    .center{display:flex;justify-content:center;margin:20px 0}
     .btn{
-      display:inline-flex;align-items:center;justify-content:center;gap:10px;
-      min-width:180px;height:46px;border-radius:12px;border:none;cursor:pointer;
-      color:#fff;background:var(--primary);font-weight:700;letter-spacing:.2px;
-      box-shadow:0 10px 20px rgba(37,99,235,.25); transition:transform .05s ease, background .15s ease;
+      appearance:none;border:0;border-radius:999px;padding:12px 28px;
+      font-weight:700;letter-spacing:.2px;color:#fff;background:var(--accent);
+      box-shadow:0 6px 22px rgba(29,78,216,.25);cursor:pointer;transition:.15s;
     }
-    .btn:active{transform:translateY(1px); background:var(--primary-press)}
-    .btn[disabled]{opacity:.7;cursor:not-allowed;transform:none;box-shadow:none}
-    .stack{display:flex;flex-direction:column;gap:22px}
-    .copy-row{display:flex;justify-content:center;margin-top:14px}
+    .btn:disabled{opacity:.6;cursor:not-allowed;box-shadow:none}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{background:var(--accent-press);transform:none}
+
+    .mono{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .stack{display:grid;gap:14px}
+    .disclaimer{
+      margin-top:10px;border:1px solid #fed7aa;background:var(--warn-bg);
+      color:var(--warn);border-radius:12px;padding:12px 14px;font-size:14px;
+    }
     .muted{color:var(--muted)}
-    .error{color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:12px 14px;border-radius:12px}
-    .row{display:grid;gap:18px}
-    @media (min-width:900px){ .row{grid-template-columns:1fr} }
-    /* Spinner inside button */
-    .spinner{
-      width:16px;height:16px;border-radius:50%;
-      border:2.5px solid rgba(255,255,255,.45); border-top-color:#fff;
-      animation:spin .8s linear infinite;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <h1 class="title">Clinical Note Assistant</h1>
+    <p class="tagline">Clean, objective charting—faster. Built to encourage AHS-aligned documentation.</p>
 
     <div class="card stack">
-      <div>
-        <div class="label">Input</div>
-        <textarea id="input" placeholder="e.g., declined shower this morning; c/o feeling unwell; staff informed RN; safety maintained."></textarea>
+      <label for="input">Input</label>
+      <textarea id="input" placeholder="e.g., refused shower this morning; c/o feeling unwell; staff offered alternative…"></textarea>
+
+      <div class="center">
+        <button id="go" class="btn">Generate</button>
       </div>
 
-      <div class="row" style="justify-items:center">
-        <button id="generate" class="btn">
-          <span id="genLabel">Generate</span>
-        </button>
+      <label for="feedback">Educator Feedback</label>
+      <textarea id="feedback" class="mono" readonly placeholder="—"></textarea>
+
+      <label for="example">Suggested Example (based on feedback)</label>
+      <textarea id="example" class="mono" readonly placeholder="—"></textarea>
+
+      <div class="center">
+        <button id="copyExample" class="btn">Copy</button>
       </div>
 
-      <div>
-        <div class="label">Output</div>
-        <textarea id="output" readonly placeholder="—"></textarea>
-        <div class="copy-row">
-          <button id="copy" class="btn" type="button">Copy</button>
-        </div>
+      <div class="disclaimer">
+        Note: The suggested example is a guide to illustrate expected detail and structure. It must not replace
+        objective documentation of what <strong>you actually observed and completed</strong>. Always chart facts, follow AHS policy,
+        and document per site procedure.
       </div>
-
-      <div>
-        <div class="label">Educator Feedback</div>
-        <textarea id="feedback" readonly placeholder="—"></textarea>
-      </div>
-
-      <div>
-        <div class="label">Suggested Example (based on feedback)</div>
-        <textarea id="example" readonly placeholder="—"></textarea>
-      </div>
-
-      <div id="err" class="error" style="display:none"></div>
-      <div class="muted" style="text-align:center">Built for clarity and objectivity • Powered by <code>/api/chat</code></div>
     </div>
+
+    <p class="muted" style="text-align:center;margin-top:18px;"></p>
   </div>
 
   <script>
-    const $ = (id) => document.getElementById(id);
-    const btn = $("generate");
-    const genLabel = $("genLabel");
+    const $ = id => document.getElementById(id);
+    const goBtn = $("go");
     const input = $("input");
-    const output = $("output");
     const feedback = $("feedback");
     const example = $("example");
-    const err = $("err");
-    const copyBtn = $("copy");
+    const copyBtn = $("copyExample");
 
-    function setLoading(isLoading){
-      if(isLoading){
-        btn.disabled = true;
-        genLabel.textContent = "Generating…";
-        const sp = document.createElement("span");
-        sp.className = "spinner";
-        sp.setAttribute("aria-hidden","true");
-        if(!btn.querySelector(".spinner")) btn.appendChild(sp);
-      }else{
-        btn.disabled = false;
-        genLabel.textContent = "Generate";
-        const sp = btn.querySelector(".spinner");
-        if(sp) sp.remove();
+    async function generate() {
+      const text = input.value.trim();
+      if (!text) return;
+      goBtn.disabled = true; goBtn.textContent = "Working…";
+      feedback.value = "—";
+      example.value = "—";
+      try {
+        const r = await fetch("/api/chat", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ input: text })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data?.error || "Server error");
+
+        feedback.value = data.feedback || "—";
+        example.value = data.example || "—";
+      } catch (e) {
+        feedback.value = `Network error: ${e.message}`;
+      } finally {
+        goBtn.disabled = false; goBtn.textContent = "Generate";
       }
     }
 
-    async function callApi(note){
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: note })
-      });
-      if(!res.ok){
-        const text = await res.text().catch(()=> "");
-        throw new Error(`Server ${res.status}: ${text || res.statusText}`);
-      }
-      return res.json();
-    }
-
-    btn.addEventListener("click", async () => {
-      err.style.display="none"; err.textContent="";
-      output.value = ""; feedback.value = ""; example.value = "";
-      const note = input.value.trim();
-      if(!note){ err.textContent = "Please enter a brief input first."; err.style.display="block"; return; }
-      try{
-        setLoading(true);
-        const data = await callApi(note);
-        output.value   = data.note || "";
-        feedback.value = data.feedback || "";
-        example.value  = data.example || "";
-      }catch(e){
-        err.textContent = "Network error: " + e.message;
-        err.style.display = "block";
-      }finally{
-        setLoading(false);
-      }
-    });
-
-    copyBtn.addEventListener("click", async () => {
-      try{
-        await navigator.clipboard.writeText(output.value || "");
+    function copyExample() {
+      const txt = example.value.trim();
+      if (!txt) return;
+      navigator.clipboard.writeText(txt).then(()=>{
         copyBtn.textContent = "Copied!";
         setTimeout(()=> copyBtn.textContent = "Copy", 1200);
-      }catch{
-        copyBtn.textContent = "Failed";
-        setTimeout(()=> copyBtn.textContent = "Copy", 1200);
-      }
-    });
+      });
+    }
+
+    goBtn.addEventListener("click", generate);
+    copyBtn.addEventListener("click", copyExample);
   </script>
 </body>
 </html>
