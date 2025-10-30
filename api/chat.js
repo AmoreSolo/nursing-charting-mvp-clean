@@ -1,10 +1,8 @@
 // /api/chat.js
 import OpenAI from "openai";
-
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -15,22 +13,34 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing 'input' text." });
     }
 
-    // One-shot JSON instruction to produce 3 fields
     const system = `
-You are a nursing documentation assistant for assisted-living/continuing-care.
-Return concise, objective notes in professional tone (no diagnosis, no assumptions).
-Use Canadian/Alberta nomenclature (AHS), 24-hour time, and resident-focused language.
-Never include identifiers (names/room #).`;
+You are an AI assistant trained in Alberta Health Services (AHS) nursing documentation standards.
+Your role: transform short nurse inputs into accurate, objective charting and provide educational feedback.
+
+Rules:
+- Be concise (1–3 sentences max per note).
+- Always focus on observable facts, actions, and resident responses.
+- Avoid assumptions, diagnoses, or subjective phrasing.
+- Use professional tone and complete sentences.
+- Use realistic examples of resident behaviour, engagement, or outcomes (e.g., “smiled and clapped along with peers,” “completed 50% of meal,” “verbalized feeling tired after activity”).
+- Avoid vague placeholders like [specific detail]; instead, insert likely realistic examples of what should be documented.
+`;
 
     const user = `
 Brief input: """${input.trim()}"""
 
-Task:
-1) Rewrite as a clean, objective nursing chart note (1–2 sentences max).
-2) Provide a single educator feedback point telling the author what detail is missing or how to improve (AHS standards: facts, time, action, response, safety).
-3) Based on that feedback, provide one improved example note that shows what to include (use bracket placeholders like [specific symptom] if facts are unknown).
+Your tasks:
+1. Rewrite the input into a clear, objective, and audit-ready nursing chart note.
+2. Provide one educator feedback comment — what the staff could add or improve (based on AHS documentation standards: FACTS: Focused, Accurate, Concise, Timely, and Safe).
+3. Based on your feedback, generate a new "Suggested Example" note that includes **realistic examples** (e.g., specific engagement levels, emotional or physical responses, completion percentages, or follow-up actions).  
+   - Use examples consistent with long-term care or assisted living documentation.
+   - Do NOT use placeholder brackets (e.g., [specific observation]).
+   - Include concrete examples, e.g.:
+       ✅ “Resident participated in exercise group for 20 minutes, smiled and followed all movements.”  
+       ✅ “Ate approximately 75% of meal, tolerated fluids well.”  
+       ✅ “Reported feeling tired after activity; resting in recliner, safety maintained.”  
 
-Return strictly as JSON with keys:
+Output must be valid JSON with this exact format:
 {
   "note": "...",
   "feedback": "...",
@@ -40,7 +50,7 @@ Return strictly as JSON with keys:
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      temperature: 0.2,
+      temperature: 0.3,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: system },
@@ -48,7 +58,6 @@ Return strictly as JSON with keys:
       ]
     });
 
-    // Parse JSON result safely
     const raw = completion.choices?.[0]?.message?.content || "{}";
     let data;
     try { data = JSON.parse(raw); } catch { data = {}; }
@@ -58,10 +67,8 @@ Return strictly as JSON with keys:
       feedback: data.feedback || "",
       example: data.example || ""
     });
-
   } catch (err) {
     console.error("API error:", err);
-    const message = err?.response?.data?.error?.message || err.message || "Unknown error";
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: err.message || "Unknown error" });
   }
 }
