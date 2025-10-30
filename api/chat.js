@@ -1,69 +1,67 @@
+// /api/chat.js
 import OpenAI from "openai";
 
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 export default async function handler(req, res) {
+  // Only allow POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
     const { input } = req.body || {};
-    if (!input || !input.trim()) {
-      return res.status(400).json({ error: "Missing 'input'." });
+    if (!input || typeof input !== "string" || !input.trim()) {
+      return res.status(400).json({ error: "Missing 'input' text." });
     }
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // One-shot JSON instruction to produce 3 fields
+    const system = `
+You are a nursing documentation assistant for assisted-living/continuing-care.
+Return concise, objective notes in professional tone (no diagnosis, no assumptions).
+Use Canadian/Alberta nomenclature (AHS), 24-hour time, and resident-focused language.
+Never include identifiers (names/room #).`;
 
-    // Single-string prompt (works reliably with the Responses API)
-    const prompt = `
-You are a strict Alberta Health Services (AHS)–compliant nursing documentation coach.
-Transform the quick note into:
-1) a clear, objective charting NOTE (resident-focused, no diagnosis, no “appears/seems/appearing”, past tense, include only facts observed or stated, avoid subjective language).
-2) a brief FEEDBACK section (1–3 concise bullet points about what info is missing to meet AHS expectations and audit readiness).
-3) an EXAMPLE note that demonstrates the feedback in practice. If details are missing, use square-bracket placeholders like [time], [site], [medication], [dose], [provider notified] so staff know what to supply.
+    const user = `
+Brief input: """${input.trim()}"""
 
-Rules:
-- Keep all content professional and concise.
-- Do NOT invent specifics—use [brackets] for unknowns.
-- Prefer “Resident” over “patient.”
-- Use single paragraph sentences for notes.
-- Return ONLY valid JSON with keys: "note", "feedback", "example".
-- JSON must be minified (no extra keys, no markdown).
+Task:
+1) Rewrite as a clean, objective nursing chart note (1–2 sentences max).
+2) Provide a single educator feedback point telling the author what detail is missing or how to improve (AHS standards: facts, time, action, response, safety).
+3) Based on that feedback, provide one improved example note that shows what to include (use bracket placeholders like [specific symptom] if facts are unknown).
 
-Input note:
-"""${input.trim()}"""
-
-Return JSON like:
-{"note":"...","feedback":"• point 1\\n• point 2","example":"..."}
+Return strictly as JSON with keys:
+{
+  "note": "...",
+  "feedback": "...",
+  "example": "..."
+}
 `;
 
-    const r = await client.responses.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      input: prompt
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user }
+      ]
     });
 
-    const text = (r.output_text || "").trim();
+    // Parse JSON result safely
+    const raw = completion.choices?.[0]?.message?.content || "{}";
+    let data;
+    try { data = JSON.parse(raw); } catch { data = {}; }
 
-    // Try to parse JSON; fallback to safe empties if parsing fails.
-    let payload = { note: "", feedback: "", example: "" };
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      // If the model didn't return JSON for some reason
-      payload.note = "";
-      payload.feedback = "• Unable to parse model response. Please try again.";
-      payload.example = "";
-    }
+    return res.status(200).json({
+      note: data.note || "",
+      feedback: data.feedback || "",
+      example: data.example || ""
+    });
 
-    // Final safety: coerce to strings
-    const note = String(payload.note || "").trim();
-    const feedback = String(payload.feedback || "").trim();
-    const example = String(payload.example || "").trim();
-
-    return res.status(200).json({ note, feedback, example });
   } catch (err) {
-    console.error(err);
-    return res
-      .status(500)
-      .json({ error: err?.message || "Server error" });
+    console.error("API error:", err);
+    const message = err?.response?.data?.error?.message || err.message || "Unknown error";
+    return res.status(500).json({ error: message });
   }
 }
