@@ -3,138 +3,139 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>SMART Charting</title>
+    <meta name="theme-color" content="#0057ff" />
+
+    <!-- Inline SVG favicon to avoid 404s -->
+    <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%230057ff"/><path d="M18 22h28M18 30h22M18 38h28" stroke="white" stroke-width="4" stroke-linecap="round"/></svg>'>
+
+    <link rel="manifest" href="/manifest.json" />
+
     <style>
-      :root {
-        --bg: #f7f8fb;
-        --card: #ffffff;
-        --ink: #1a1a1a;
-        --accent: #0057ff;
-        --radius: 14px;
+      :root{
+        --bg:#f7f8fb; --card:#fff; --ink:#1a1a1a;
+        --muted:#6b7280; --accent:#0057ff; --accent-press:#0041cc;
+        --radius:14px;
       }
-      body {
-        font-family: "Segoe UI", sans-serif;
-        background-color: var(--bg);
-        color: var(--ink);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: start;
-        margin: 0;
-        padding: 40px 20px;
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body{
+        margin:0; background:var(--bg); color:var(--ink);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+        display:flex; justify-content:flex-start; align-items:center; flex-direction:column; padding:36px 16px;
       }
-      h1 {
-        color: var(--accent);
-        font-size: 2em;
-        font-weight: 700;
+      .wrap{ width:100%; max-width:860px; }
+      h1{ margin:0 0 6px; font-size:clamp(24px,4vw,34px); font-weight:800; letter-spacing:.2px; }
+      .tag{ color:var(--muted); margin:0 0 22px; font-size:clamp(12px,2vw,15px); }
+      label{ display:block; margin:18px 0 8px; font-weight:700; color:#374151; }
+      textarea{
+        width:100%; min-height:132px; background:var(--card); color:var(--ink);
+        border:1px solid #e5e7eb; border-radius:var(--radius); padding:14px 16px;
+        font-size:16px; line-height:1.5; resize:vertical; outline:none;
+        box-shadow:0 1px 0 rgba(0,0,0,.02);
       }
-      p.tagline {
-        color: #555;
-        font-size: 1em;
-        margin-bottom: 20px;
+      .panel{
+        width:100%; background:var(--card); border:1px solid #e5e7eb; border-radius:var(--radius);
+        padding:14px 16px; white-space:pre-wrap; min-height:84px;
       }
-      textarea {
-        width: 100%;
-        max-width: 600px;
-        min-height: 120px;
-        font-size: 1rem;
-        border-radius: var(--radius);
-        border: 1px solid #ddd;
-        padding: 10px;
-        resize: vertical;
+      .row{ display:flex; gap:18px; flex-wrap:wrap; align-items:center; justify-content:center; }
+      .btn{
+        appearance:none; border:0; cursor:pointer; font-weight:700;
+        background:var(--accent); color:#fff; padding:12px 28px; border-radius:var(--radius);
+        box-shadow:0 8px 18px rgba(0,87,255,.22), 0 2px 4px rgba(0,0,0,.06);
+        transition:transform .04s ease, background .2s ease, box-shadow .2s ease;
       }
-      button {
-        margin-top: 20px;
-        background-color: var(--accent);
-        color: #fff;
-        border: none;
-        border-radius: var(--radius);
-        padding: 12px 30px;
-        font-size: 1rem;
-        cursor: pointer;
-        font-weight: 600;
-        transition: 0.3s;
-      }
-      button:hover {
-        background-color: #0041cc;
-      }
-      label {
-        margin-top: 25px;
-        font-weight: 600;
-        color: #333;
-        display: block;
-        text-align: left;
-        width: 100%;
-        max-width: 600px;
-      }
-      .output, .feedback, .example {
-        width: 100%;
-        max-width: 600px;
-        background: var(--card);
-        border-radius: var(--radius);
-        border: 1px solid #ddd;
-        padding: 12px;
-        margin-top: 8px;
-        white-space: pre-wrap;
-      }
-      .disclaimer {
-        font-size: 0.9rem;
-        color: #9b0000;
-        margin-top: 10px;
-        text-align: center;
-        max-width: 600px;
+      .btn:hover{ background:var(--accent-press); }
+      .btn:active{ transform:translateY(1px); box-shadow:0 6px 14px rgba(0,87,255,.2), 0 1px 3px rgba(0,0,0,.08); }
+      .disc{
+        margin:12px 0 0; color:#9b0000; font-size:.92rem; text-align:center;
       }
     </style>
   </head>
 
   <body>
-    <h1>SMART Charting</h1>
-    <p class="tagline">Specific • Measurable • Achievable • Relevant • Time-bound</p>
+    <div class="wrap">
+      <h1>SMART Charting</h1>
+      <p class="tag">Specific • Measurable • Achievable • Relevant • Time-bound</p>
 
-    <label>Input</label>
-    <textarea id="userInput" placeholder="e.g., refused shower this morning; c/o feeling unwell; staff offered alternative."></textarea>
-    <button id="generateBtn">Generate</button>
+      <label for="userInput">Input</label>
+      <textarea id="userInput" placeholder="e.g., refused shower this morning; c/o feeling unwell; staff offered alternative."></textarea>
 
-    <label>Educator Feedback</label>
-    <div class="feedback" id="feedbackBox">–</div>
+      <div class="row" style="margin-top:18px;">
+        <button class="btn" id="generateBtn">Generate</button>
+      </div>
 
-    <label>Suggested Example (based on feedback)</label>
-    <div class="example" id="exampleBox">–</div>
-    <button id="copyExampleBtn">Copy Example</button>
+      <label for="feedbackBox">Educator Feedback</label>
+      <div id="feedbackBox" class="panel">–</div>
 
-    <p class="disclaimer">
-      ⚠️ The suggested example is only a guide and should not replace your own objective documentation based on direct observation.
-    </p>
+      <label for="exampleBox">Suggested Example (based on feedback)</label>
+      <div id="exampleBox" class="panel">–</div>
+
+      <div class="row" style="margin-top:18px;">
+        <button class="btn" id="copyExampleBtn">Copy Example</button>
+      </div>
+
+      <p class="disc">
+        ⚠️ The suggested example is a guide only. It must not replace your own objective documentation based on what you directly observed.
+      </p>
+    </div>
 
     <script>
+      // --- Service Worker registration with version bump to force fresh HTML
+      (async () => {
+        if ('serviceWorker' in navigator) {
+          try {
+            const reg = await navigator.serviceWorker.register('/service-worker.js?v=3');
+            // When a new SW takes control, reload to pick up fresh HTML
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              window.location.reload();
+            });
+            // If there's a waiting worker, trigger it
+            if (reg.waiting) reg.waiting.postMessage({type: 'SKIP_WAITING'});
+          } catch (e) {
+            console.warn('SW registration failed:', e);
+          }
+        }
+      })();
+
       const generateBtn = document.getElementById('generateBtn');
+      const copyExampleBtn = document.getElementById('copyExampleBtn');
       const feedbackBox = document.getElementById('feedbackBox');
       const exampleBox = document.getElementById('exampleBox');
-      const copyExampleBtn = document.getElementById('copyExampleBtn');
 
-      generateBtn.onclick = async () => {
+      generateBtn.addEventListener('click', async () => {
         const input = document.getElementById('userInput').value.trim();
-        if (!input) return alert('Please enter your note.');
+        if (!input) { alert('Please enter your note.'); return; }
 
-        feedbackBox.textContent = "Generating feedback...";
-        exampleBox.textContent = "Generating example...";
+        feedbackBox.textContent = 'Generating feedback...';
+        exampleBox.textContent = 'Generating example...';
 
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userInput: input })
-        });
+        try {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userInput: input })
+          });
+          const data = await res.json();
+          feedbackBox.textContent = data.feedback || 'No feedback generated.';
+          exampleBox.textContent = data.example || 'No example returned.';
+        } catch (err) {
+          feedbackBox.textContent = 'Network error while generating feedback.';
+          exampleBox.textContent = '—';
+          console.error(err);
+        }
+      });
 
-        const data = await res.json();
-
-        feedbackBox.textContent = data.feedback || "No feedback generated.";
-        exampleBox.textContent = data.example || "No example returned.";
-      };
-
-      copyExampleBtn.onclick = () => {
-        navigator.clipboard.writeText(exampleBox.textContent);
-        alert("Copied to clipboard!");
-      };
+      copyExampleBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(exampleBox.textContent);
+          copyExampleBtn.textContent = 'Copied!';
+          setTimeout(() => { copyExampleBtn.textContent = 'Copy Example'; }, 1200);
+        } catch {
+          alert('Could not copy. Please select and copy manually.');
+        }
+      });
     </script>
   </body>
 </html>
