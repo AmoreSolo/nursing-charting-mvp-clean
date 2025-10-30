@@ -1,70 +1,99 @@
-// /api/chat.js
 import OpenAI from "openai";
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export const config = {
+  runtime: "nodejs18.x",
+};
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
   try {
-    const { input } = req.body || {};
-    if (!input || typeof input !== "string" || !input.trim()) {
-      return res.status(400).json({ error: "Missing 'input' text." });
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
     }
 
+    const { note } = req.body || {};
+    if (!note || typeof note !== "string") {
+      return res.status(400).json({ error: "Missing 'note' (string) in body" });
+    }
+
+    // System prompt: educator voice + AHS-aligned guidance + strict JSON-only output
     const system = `
-You are an AI assistant trained on Alberta Health Services (AHS) nursing documentation principles.
-Your goals:
-- Encourage objective, factual charting (who/what/when/where), resident response, interventions, safety, and notifications.
-- Maintain professional, concise tone (avoid judgement/opinion).
-- Provide educational feedback with bullet points that include AHS-aligned standards.
-- Create a realistic example note that models excellent documentation. No placeholders like [detail]; insert concrete, likely examples (e.g., duration, % intake, behaviours, pain scores, assistance level, mobility aids, safety checks, notifications).
+You are a Clinical Documentation Educator for continuing care in Alberta.
+Your job: (1) critique the nurse's note against **AHS Nursing Documentation Standards**
+and (2) provide a realistic, objective **Suggested Example** note that demonstrates
+the missing details. Be specific. No placeholders.
+
+Tone: supportive, mentoring, professional. Assume this is for audit-readiness
+and interdisciplinary communication.
+
+AHS-aligned teaching anchors (weave into feedback where relevant):
+- Objective, factual, resident-focused language
+- Required assessment details (site, size, color/characteristics, drainage/odor, associated symptoms, onset/time)
+- Interventions & resident response
+- Communication/escalation (who was notified, when)
+- Timeliness and legibility
+- Avoid assumptions, opinions, vague terms; use measurable language
+
+OUTPUT RULES (VERY IMPORTANT):
+Return ONLY a single JSON object with these keys:
+{
+  "educator_feedback_html": string,   // HTML string: short intro paragraph + <ul><li>…</li></ul> + a final line noting “AHS Nursing Documentation Standards”
+  "suggested_example": string         // 2–5 sentences, objective, specific, realistic. No placeholders like [xx] or {{xx}}.
+}
+Do not include any extra text outside the JSON.
 `;
 
     const user = `
-Staff input (brief): """${input.trim()}"""
-
-Return strict JSON matching exactly:
-{
-  "feedback": "string with a short intro line followed by bullet points",
-  "example": "string with a realistic example clinical note (1–3 sentences)"
-}
-
-Requirements:
-1) FEEDBACK:
-   - Start with one sentence summarizing what to improve.
-   - Then add 5–8 concise bullet points that teach *what to include* next time.
-   - Include AHS-aligned standards as bullets, phrased plainly (e.g., "Focused & objective facts", "Accurate & complete", "Concise & clinically relevant", "Timely entry", "Safety & follow-up actions documented").
-   - Also include situational bullets such as:
-     - timeframes/duration; specific measurable details (e.g., 75% intake, 10/10 pain -> 6/10 after PRN);
-     - resident response to care/education; risks/safety measures; persons notified (RN/LPN/MD/family) with time;
-     - refusals with alternatives offered and outcome; interventions and evaluation.
-
-2) EXAMPLE:
-   - 1–3 sentences, objective and realistic for assisted-living/LTC.
-   - Insert concrete examples (duration, percentages, assistance level, observable behaviour, mobility device, safety checks).
-   - No placeholders like [specific detail]; write actual content that illustrates what's expected.
+Nurse's quick note (free text):
+"""
+${note}
+"""
 `;
 
-    const completion = await client.chat.completions.create({
+    const response = await client.responses.create({
       model: "gpt-4o-mini",
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-      messages: [
+      input: [
         { role: "system", content: system },
-        { role: "user", content: user }
-      ]
+        { role: "user", content: user },
+      ],
     });
 
-    const raw = completion.choices?.[0]?.message?.content || "{}";
+    // Try to parse the model output as JSON safely
+    const raw = response.output_text || "";
+    const jsonText =
+      // If the model wrapped it in code fences, strip them
+      raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
     let data;
-    try { data = JSON.parse(raw); } catch { data = {}; }
+    try {
+      data = JSON.parse(jsonText);
+    } catch {
+      // Fallback: attempt to extract the first {...} block
+      const m = jsonText.match(/\{[\s\S]*\}/);
+      if (!m) {
+        throw new Error("Model did not return valid JSON.");
+      }
+      data = JSON.parse(m[0]);
+    }
+
+    const { educator_feedback_html, suggested_example } = data || {};
+    if (!educator_feedback_html || !suggested_example) {
+      return res.status(502).json({
+        error: "Upstream returned incomplete data.",
+        raw: jsonText,
+      });
+    }
 
     return res.status(200).json({
-      feedback: data.feedback || "",
-      example: data.example || ""
+      feedbackHtml: educator_feedback_html,
+      example: suggested_example,
     });
   } catch (err) {
-    console.error("API error:", err);
-    return res.status(500).json({ error: err.message || "Unknown error" });
+    console.error("API /api/chat error:", err);
+    return res
+      .status(500)
+      .json({ error: "Server error", detail: String(err?.message || err) });
   }
 }
