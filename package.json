@@ -1,3 +1,10 @@
 {
-  "type": "module"
+  "name": "nursing-charting-mvp",
+  "version": "1.0.0",
+  "description": "AI-powered nursing charting MVP",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "openai": "^4.68.4"
+  }
 }
